@@ -1,0 +1,5 @@
+*.o
+/libcommon.a
+/fspec-hash
+/fspec-sort
+/fspec-tar
