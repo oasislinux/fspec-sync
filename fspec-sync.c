@@ -486,7 +486,7 @@ fspec(char *pos, size_t len)
 				fatal("chmod %s:", path);
 		}
 	}
-	if (S_ISDIR(mode))
+	if (S_ISDIR(st.st_mode) && S_ISDIR(mode))
 		dirpush();
 }
 
