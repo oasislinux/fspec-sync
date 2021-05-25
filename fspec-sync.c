@@ -17,7 +17,7 @@ static char *argv0;
 static char path[PATH_MAX];
 static size_t baselen, pathlen;
 static struct dir *dir;
-static int dflag;
+static int dflag, fetchdir = AT_FDCWD;
 
 struct dir {
 	struct dirent **ent;
@@ -171,7 +171,7 @@ fetch(char *tmp, size_t tmplen, const char *src, unsigned char hash[static BLAKE
 	dstfd = mkstemp(tmp);
 	if (dstfd < 0)
 		fatal("mkstemp:");
-	srcfd = open(src, O_RDONLY);
+	srcfd = openat(fetchdir, src, O_RDONLY);
 	if (srcfd < 0)
 		fatal("open %s:", src);
 	blake3_hasher_init(&ctx);
@@ -507,8 +507,9 @@ main(int argc, char *argv[])
 		end = strrchr(argv[1], '/');
 		if (end) {
 			end[1] = '\0';
-			if (chdir(argv[1]) != 0)
-				fatal("chdir %s:", argv[1]);
+			fetchdir = open(argv[1], O_DIRECTORY | O_PATH | O_CLOEXEC);
+			if (fetchdir < 0)
+				fatal("open %s:", argv[1]);
 		}
 	} else if (argc != 1) {
 		usage();
