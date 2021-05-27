@@ -463,10 +463,16 @@ fspec(char *pos, size_t len)
 	}
 	if (replace || (!S_ISLNK(mode) && mode != st.st_mode)) {
 		infostring(new, sizeof(new), mode, size);
-		if (old[0])
-			printf("%-48s %-18s → %s\n", name, old, new);
-		else
+		if (old[0]) {
+			char rel[10];
+
+			rel[0] = '\0';
+			if (S_ISREG(st.st_mode) && S_ISREG(mode))
+				snprintf(rel, sizeof(rel), " (%3d%%)", (int)(size * 100 / st.st_size));
+			printf("%-48s %-18s → %s%s\n", name, old, new, rel);
+		} else {
 			printf("%-69s %s\n", name, new);
+		}
 	}
 	if (!dflag) {
 		if (replace) {
