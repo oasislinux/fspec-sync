@@ -76,7 +76,7 @@ fspec(char *pos, size_t len)
 int
 main(int argc, char *argv[])
 {
-	argv0 = argc ? argv[0] : "fspec-hash";
+	argv0 = argc ? argv[0] : "fspec-b3sum";
 	if (argc)
 		++argv, --argc;
 	if (argc)
