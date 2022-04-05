@@ -8,6 +8,8 @@
 
 static char *argv0;
 
+int cflag = 0;
+
 static void
 usage(void)
 {
@@ -18,14 +20,17 @@ usage(void)
 static void
 fspec(char *pos, size_t len)
 {
-	char *source, *end;
-	int reg = 0, hash = 1;
+	char *path, *source, *end, *hashline;
+	int reg = 0;
 
 	end = memchr(pos, '\n', len);
 	assert(end);
 	if (fwrite(pos, 1, end - pos + 1, stdout) != end - pos + 1)
 		fatal("write:");
 	*end = 0;
+
+	hashline = 0;
+	path = pos;
 	source = pos + 1;
 	len -= end + 1 - pos;
 	pos = end + 1;
@@ -41,17 +46,19 @@ fspec(char *pos, size_t len)
 		} else if (len >= 7 && memcmp(pos, "source=", 7) == 0) {
 			source = pos + 7;
 		} else if (len >= 7 && memcmp(pos, "blake3=", 7) == 0) {
-			hash = 0;
+			hashline = pos + 7;
 		}
 		len -= end + 1 - pos;
 		pos = end + 1;
 	}
-	if (reg && hash) {
+
+	if (reg && (!hashline || cflag)) {
 		FILE *file;
 		blake3_hasher ctx;
 		char buf[16384];
+		char hexsum[BLAKE3_OUT_LEN*2+1];
+		unsigned char sum[BLAKE3_OUT_LEN];
 		size_t len;
-		unsigned char out[BLAKE3_OUT_LEN];
 
 		file = fopen(source, "rb");
 		if (!file)
@@ -63,12 +70,26 @@ fspec(char *pos, size_t len)
 		} while (len == sizeof(buf));
 		if (ferror(file))
 			fatal("read %s:", source);
-		blake3_hasher_finalize(&ctx, out, sizeof(out));
 		fclose(file);
-		fputs("blake3=", stdout);
-		for (size_t i = 0; i < sizeof(out); ++i)
-			printf("%02x", out[i]);
-		fputc('\n', stdout);
+
+		blake3_hasher_finalize(&ctx, sum, sizeof(sum));
+		for (size_t i = 0; i < sizeof(sum); ++i) {
+			static char *h = "0123456789abcdef";
+			hexsum[i*2] = h[(sum[i]&0xf0)>>4];
+			hexsum[i*2+1] = h[sum[i]&0x0f];
+		}
+		hexsum[sizeof(hexsum) - 1] = 0;
+		if (hashline && cflag && strcmp(hashline, hexsum)) {
+			fprintf(stderr, "b3sum check failed:\n");
+			fprintf(stderr, "  path=%s\n", path);
+			fprintf(stderr, "  source=%s\n", source);
+			fprintf(stderr, "  expected=%s\n", hashline);
+			fprintf(stderr, "  got=%s\n", hexsum);
+			exit(1);
+		}
+
+		if (!hashline)
+			fprintf(stdout, "blake3=%s\n", hexsum);
 	}
 	fputc('\n', stdout);
 }
@@ -77,6 +98,13 @@ int
 main(int argc, char *argv[])
 {
 	argv0 = argc ? argv[0] : "fspec-b3sum";
+
+	ARGBEGIN {
+	case 'c':
+		cflag = 1;
+		break;
+	} ARGEND
+
 	if (argc)
 		++argv, --argc;
 	if (argc)
