@@ -74,7 +74,7 @@ fspec(char *pos, size_t reclen)
 	reclen -= len + 1;
 	if (len > 100) {
 		i = len < 155 ? len : 155;
-		memcpy(hdr + 345, pos, len < 155 ? len : 155);
+		memcpy(hdr + 345, pos, i);
 		while (i > 0 && hdr[345 + --i] != '/')
 			hdr[345 + i] = 0;
 		hdr[345 + i] = 0;
