@@ -9,15 +9,15 @@ CFLAGS+=-Wall -Wpedantic
 COMMON_OBJ=fatal.o parse.o reallocarray.o
 
 .PHONY: all
-all: fspec-hash fspec-sort fspec-sync fspec-tar
+all: fspec-b3sum fspec-sort fspec-sync fspec-tar
 
-$(COMMON_OBJ) fspec-hash.o fspec-sort.o fspec-tar.o: common.h
+$(COMMON_OBJ) fspec-b3sum.o fspec-sort.o fspec-tar.o: common.h
 
 libcommon.a: $(COMMON_OBJ)
 	$(AR) $(ARFLAGS) $@ $(COMMON_OBJ)
 
-fspec-hash: fspec-hash.o libcommon.a
-	$(CC) $(LDFLAGS) -o $@ fspec-hash.o libcommon.a $(BLAKE3_LDLIBS)
+fspec-b3sum: fspec-b3sum.o libcommon.a
+	$(CC) $(LDFLAGS) -o $@ fspec-b3sum.o libcommon.a $(BLAKE3_LDLIBS)
 
 fspec-sort: fspec-sort.o libcommon.a
 	$(CC) $(LDFLAGS) -o $@ fspec-sort.o libcommon.a
@@ -31,7 +31,7 @@ fspec-tar: fspec-tar.o libcommon.a
 .PHONY: clean
 clean:
 	rm -f\
-		fspec-hash fspec-hash.o\
+		fspec-b3sum fspec-b3sum.o\
 		fspec-sort fspec-sort.o\
 		fspec-tar fspec-tar.o\
 		libcommon.a $(COMMON_OBJ)
