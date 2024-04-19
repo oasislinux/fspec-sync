@@ -193,7 +193,7 @@ fspec(char *pos, size_t reclen)
 int
 main(int argc, char *argv[])
 {
-	char buf[1024] = {0};
+	static const char buf[1024];
 
 	argv0 = argc ? argv[0] : "fspec-tar";
 	if (argc)
